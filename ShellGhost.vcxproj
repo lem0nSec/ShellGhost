@@ -130,10 +130,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ShellGhost.c" />
+    <ClCompile Include="src/ShellGhost.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ShellGhost.h" />
+    <ClInclude Include="src/ShellGhost.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
