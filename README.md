@@ -85,17 +85,25 @@ if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= (
 RDX, R8 and R9 are not covered. But they will be.
 
 
+## Differences and Similarities with other Techniques
+[ShellcodeFluctuation](https://github.com/mgeeky/ShellcodeFluctuation) is a very similar in-memory evasion technique. Just like it, the allocated memory here 'flucuates' from RW to RX. In contrast, ShellGhost introduces the following improvements:
+
+* RC4 algorithm with 'Shellcode Mapping' rather than XOR
+* No need to hook functions
+* Compatibility with MSF shellcodes
+
+Among the improvements, the absence of function hooking impedes PE-Sieve to track down the related IOCs.
 
 
+![](pictures/pe-sieve_detection.png)
 
 
-
-- Problem: Adjustment of winapi call parameters
-- Differences and Similarities with other techniques (Shellcode Fluctuation)
-	- rc4 with systemfunction032
-	- no hooking
-	- MSF payloads
-- Downsides and Room for Improvement
+ShellGhost is far from being a perfect technique though. It still suffers from the biggest downside all these techniques have, namely __the need to have private executable memory at some point during execution__. More advanced techniques like [Foliage](https://github.com/y11en/FOLIAGE) already found a way around this. In addition, a memory allocation full of software breakpoints can be countered by a YARA rule. The following picture shows Moneta correctly detecting an IOC for the RX PRV allocation.
 
 
+![](pictures/moneta_detection_2.png)
 
+
+## References
+* https://github.com/mgeeky/ShellcodeFluctuation
+* https://github.com/y11en/FOLIAGE
