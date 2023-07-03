@@ -65,15 +65,15 @@ Metasploit x64 shellcodes have winapi string parameters between instructions. So
 
 
 ```c
-	<snip>
+<snip>
 	
-	if (*(WORD*)(WORD*)exceptionData->ContextRecord->Rip == 0xe0ff) // if RIP is 'JMP RAX'
+if (*(WORD*)(WORD*)exceptionData->ContextRecord->Rip == 0xe0ff) // if RIP is 'JMP RAX'
 
-	<snip>
+<snip>
 
-	if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= ((DWORD64)allocation_base + sizeof(sh)))) // if RCX is inside the allocation
+if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= ((DWORD64)allocation_base + sizeof(sh)))) // if RCX is inside the allocation
 
-	<snip>
+<snip>
 ```
 
 
