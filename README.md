@@ -60,7 +60,7 @@ This shellcode has 98 instructions, so 98 CRYPT_BYTES_QUOTA structs are declared
 ![](pictures/shellcode_mapping_2.png)
 
 
-## Winapi Calls Issues
+## Adjusting Winapi Parameters
 Metasploit x64 shellcodes have winapi string parameters between instructions. So to say, an ordinary MSF x64 shellcode that calls Winexec does not push the first parameter (string) on the stack. Rather it has the string hardcoded between instructions. In other words, a pointer to a position inside the shellcode itself will be passed to Winexec. This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters or invalid code. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi it's calling inside the RAX register, then makes a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. This is because RCX is the first parameter to be passed in accordance with the Windows calling convention. For now RDX, R8 and R9 are not covered. The following snippet of code contains the two conditions that has to be met to allow the MSF shellcode to correctly issue a winapi call.
 
 
