@@ -61,7 +61,7 @@ This shellcode has 98 instructions, so 98 CRYPT_BYTES_QUOTA structs are declared
 
 
 ## Adjusting Winapi Parameters
-Metasploit x64 shellcodes tipically have winapi string parameters stored between instructions. So to say, a MSF x64 shellcode that calls Winexec does not push the first parameter (string) on the stack. Rather, the RCX register (first parameter) is a pointer inside the shellcode itself just like the following picture. 
+Metasploit x64 shellcodes tipically have winapi string parameters stored between instructions. So to say, a MSF x64 shellcode that calls Winexec does not push a series of bytes with a nullbyte at the end to have the first parameter string on the stack. Rather, the RCX register (first parameter) is a pointer inside the shellcode itself just like the following picture. 
 
 
 ![](pictures/msf_jmp_rax.png)
