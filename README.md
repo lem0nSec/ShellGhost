@@ -4,13 +4,13 @@ __A memory-based evasion technique for droppers which makes shellcode invisible 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Motivation
-I came up with ShellGhost after a Metasploit shellcode inside one of my droppers was flagged as malicious by an EDR solution. The EDR correctly detected the shellcode placed into the .text segment after decryption. That's raised the need for having __a code that executes an 'invisible' shellcode__.
+I came up with ShellGhost after a Metasploit shellcode inside one of my droppers was flagged as malicious by an EDR solution. The EDR correctly detected the shellcode placed into the .text segment after decryption. That raised the need for having __a code that executes an 'invisible' shellcode from process start to finish__.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Handling the Thread Execution Flow
 __ShellGhost relies on Vectored Exception Handling in combination with software breakpoints__ to cyclically stop thread execution, replacing the executed breakpoint with a RC4-encrypted shellcode instruction, decrypting the instruction and resuming execution after restoring memory protection to RX. When the subsequent EXCEPTION_BREAKPOINT is catched, the exception handler replaces the previous shellcode instruction with a new breakpoint so that the allocation will never disclose the complete shellcode in an unencrypted state. This happens inside a private memory page which is initially marked as READ/WRITE.
-Having a RW PRV allocation will not be considered as an 'Indicator of Compromise' by memory scanners such as PE-Sieve and Moneta. When the allocation becomes RX and the page is scanned, nothing but breakpoints will be found. This happens while the shellcode is actually under execution. The following picture shows that a reverse shell is running, but no IOC are found by Moneta (other than the binary being unsigned).
+Having a RW PRV allocation will not be considered an 'Indicator of Compromise' by memory scanners such as PE-Sieve and Moneta. When the allocation becomes RX and the page is scanned, nothing but breakpoints will be found. This happens while the shellcode is actually under execution. The following picture shows that a reverse shell is running, but no IOC is found by Moneta (other than the binary being unsigned).
 
 
 ![](pictures/moneta_detection.png)
@@ -41,14 +41,14 @@ instruction[5].quota = 2
 USTRING buf = { 0 }; 	// will contain the buffer to be decrypted and its length
 USTRING key = { 0 }; 	// will contain the RC4 key and length
 
-buf.Length = 2 			// buffer length, or length of the instruction to be decrypted
+buf.Length = 2 		// buffer length, or length of the instruction to be decrypted
 
 ```
 
 We know that shellcode instruction number 5 is composed of 2 opcodes, so a buffer length of 2 will be passed to SystemFunction032. This is important because trying to decrypt the entire shellcode with a single call to SystemFunction032 will corrupt the shellcode.
 
-### How Shellcode Mapping is performed?
-The shellcode needs to be mapped with `ShellGhost_mapping.py` before compilation. The script extracts each single instruction and treats it as a small and independent shellcode. Instructions are encrypted with the RC4 algorithm one by one and the output is printed in C format. The result can be hardcoded inside the C code. Below is an example of what an encrypted MSF shellcode for calc.exe looks like. 
+### How is Shellcode Mapping performed?
+The shellcode needs to be mapped with `ShellGhost_mapping.py` before compilation. The script extracts each single instruction and treats it as a small and independent shellcode. Instructions are encrypted with the RC4 algorithm one by one and printed out in C format all together as unsigned char. The result can be hardcoded inside the C code. Below is an example of what an encrypted MSF shellcode instructions for calc.exe looks like.
 
 
 ![](pictures/shellcode_mapping_1.png)
@@ -60,6 +60,21 @@ This shellcode has 98 instructions, so 98 CRYPT_BYTES_QUOTA structs are declared
 ![](pictures/shellcode_mapping_2.png)
 
 
+## Winapi Calls Issues
+Metasploit x64 shellcodes have winapi string parameters between instructions. So to say, an ordinary MSF x64 shellcode that calls Winexec does not push the first parameter (string) on the stack. Rather it has the string hardcoded between instructions. In other words, a pointer to a position inside the shellcode itself will be passed to Winexec. This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters or invalid code. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi it's calling inside the RAX register, then makes a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. This is because RCX is the first parameter to be passed in accordance with the Windows calling convention. For now RDX, R8 and R9 are not covered. The following snippet of code contains the two conditions that has to be met to allow the MSF shellcode to correctly issue a winapi call.
+
+
+```c
+	<snip>
+	
+	if (*(WORD*)(WORD*)exceptionData->ContextRecord->Rip == 0xe0ff) // if RIP is 'JMP RAX'
+
+	<snip>
+
+	if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= ((DWORD64)allocation_base + sizeof(sh)))) // if RCX is inside the allocation
+
+	<snip>
+```
 
 
 
