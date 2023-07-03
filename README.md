@@ -1,4 +1,8 @@
-# ShellGhost 👻
+# ShellGhost
+
+
+![](pictures/logo.png)
+
 
 __A memory-based evasion technique for droppers which makes shellcode invisible from process start to end.__
 
@@ -98,7 +102,7 @@ Among the improvements, the absence of function hooking impedes PE-Sieve to trac
 ![](pictures/pe-sieve_detection.png)
 
 
-ShellGhost is far from being a perfect technique though. It still suffers from the biggest downside all these techniques have, namely __the need to have private executable memory at some point during execution__. More advanced techniques like [Foliage](https://github.com/y11en/FOLIAGE) already found a way around this. In addition, a memory allocation full of software breakpoints can be countered by a YARA rule. The following picture shows Moneta correctly detecting an IOC for the RX PRV allocation.
+ShellGhost is far from being a perfect technique though. It still suffers from the biggest downside all these techniques have, namely __the need to have private executable memory at some point during execution__. More advanced techniques like [Foliage](https://github.com/y11en/FOLIAGE) already found a way around this. In addition, a memory allocation full of software breakpoints can be detected by a YARA rule. The following picture shows Moneta correctly detecting an IOC for the RX PRV allocation.
 
 
 ![](pictures/moneta_detection_2.png)
