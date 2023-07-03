@@ -61,7 +61,13 @@ This shellcode has 98 instructions, so 98 CRYPT_BYTES_QUOTA structs are declared
 
 
 ## Adjusting Winapi Parameters
-Metasploit x64 shellcodes have winapi string parameters between instructions. So to say, an ordinary MSF x64 shellcode that calls Winexec does not push the first parameter (string) on the stack. Rather it has the string hardcoded between instructions. In other words, a pointer to a position inside the shellcode itself will be passed to Winexec. This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters or invalid code. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi it's calling inside the RAX register, then makes a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. This is because RCX is the first parameter to be passed in accordance with the Windows calling convention. For now RDX, R8 and R9 are not covered. The following snippet of code contains the two conditions that has to be met to allow the MSF shellcode to correctly issue a winapi call.
+Metasploit x64 shellcodes tipically have winapi string parameters stored between instructions. So to say, a MSF x64 shellcode that calls Winexec does not push the first parameter (string) on the stack. Rather, the RCX register (first parameter) is a pointer inside the shellcode itself just like the following picture. 
+
+
+![](pictures/msf_jmp_rax.png)
+
+
+This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters that will never be executed like instructions. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi they are calling inside the RAX register, then make a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. Subsequently, execution is not returned to the allocated memory. Rather, RAX (winapi address) is copied into RIP and thread execution is resumed from the winapi, thus overriding the 'JMP RAX' and keeping the allocated memory RW. This is needed for reverse shells calling WaitForSingleObject, which would cause the thread to sleep after the 'JMP RAX' while leaving memory RX. The following snippet of code contains the two conditions that has to be met to in order for ShellGhost to adjust registers containing winapi parameters and allowing the MSF shellcode to correctly issue the function call.
 
 
 ```c
@@ -75,6 +81,9 @@ if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= (
 
 <snip>
 ```
+
+RDX, R8 and R9 are not covered. But they will be.
+
 
 
 
