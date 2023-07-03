@@ -1,7 +1,9 @@
 # ShellGhost
 
 
-![](pictures/logo.png)
+<p align="center">
+  <img src="pictures/logo.png">
+</p>
 
 
 __A memory-based evasion technique for droppers which makes shellcode invisible from process start to end.__
