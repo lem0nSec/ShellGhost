@@ -129,19 +129,19 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if sys.argv[1] == "--help":
-        print("1: print C struct shellcode mapping")
-        print("2: print C struct shellcode mapping + instructions")
-        print("3: print Python variables to encrypt")
-        print("4: print encrypted shellcode in C format")
+        print("-1: print C struct shellcode mapping")
+        print("-2: print C struct shellcode mapping + instructions")
+        print("-3: print Python variables to encrypt")
+        print("-4: print encrypted shellcode in C format")
         sys.exit(0)
 
-    mod = int(sys.argv[1])
+    mod = sys.argv[1]
     if mod:
         try:
             bits = 64   # 64 bit shellcode
             binfile = None
 
-            if mod == 1:
+            if mod == "-1":
                 binfd = None
                 binfile = createBinfile(binfd, binfile)
                 cur_offset = ((disassemble(binfile, bits))[0])
@@ -152,7 +152,7 @@ if __name__ == "__main__":
                     print(f"instruction[{i}].RVA = {str(int(cur_offset[i], 16))};\n" + f"instruction[{i}].quota = {str(floor(len(opcode) / 2))};")
                     i += 1
             
-            elif mod == 2:
+            elif mod == "-2":
                 binfd = None
                 binfile = createBinfile(binfd, binfile)
                 cur_offset = ((disassemble(binfile, bits))[0])
@@ -163,7 +163,7 @@ if __name__ == "__main__":
                     print(f"instruction[{i}].RVA = {str(int(cur_offset[i], 16))};\n" + f"instruction[{i}].quota = {str(floor(len(opcode) / 2))};" + f"      {cur_instr[i]}")
                     i += 1
             
-            elif mod == 3:
+            elif mod == "-3":
                 binfd = None
                 binfile = createBinfile(binfd, binfile)
                 cur_offset = ((disassemble(binfile, bits))[0])
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                     print(f"buf{num} = b\"\\x" + "\\x".join(ops) + "\"")
                     alca = []
             
-            elif mod == 4:
+            elif mod == "-4":
                 binfd = None
                 binfile = createBinfile(binfd, binfile)
                 cur_offset = ((disassemble(binfile, bits))[0])

