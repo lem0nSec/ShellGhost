@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------------------------#
 # Author:   Angelo Frasca Caccia (lem0nSec_)                                                    #
 # Date:     16/01/2023                                                                          #
-# Title:    ShellGhost.py (shellcode mapping script for ShellGhost)                             #
+# Title:    ShellGhost_mapping.py (shellcode mapping script for ShellGhost)                             #
 # Website:  https://github.com/lem0nSec/ShellGhost                                              #
 # Credits:  https://github.com/fishstiqz/nasmshell (nasmshell)                                  #
 #           https://gist.github.com/hsauers5/491f9dde975f1eaa97103427eda50071 (RC4 encryption)  #

