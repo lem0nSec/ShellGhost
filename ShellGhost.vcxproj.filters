@@ -15,12 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ShellGhost.c">
+    <ClCompile Include="src/ShellGhost.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ShellGhost.h">
+    <ClInclude Include="src/ShellGhost.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

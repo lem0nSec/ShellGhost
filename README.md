@@ -15,11 +15,17 @@ I came up with ShellGhost after a Metasploit shellcode inside one of my droppers
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Handling the Thread Execution Flow
-__ShellGhost relies on Vectored Exception Handling in combination with software breakpoints__ to cyclically stop thread execution, replacing the executed breakpoint with a RC4-encrypted shellcode instruction, decrypting the instruction and resuming execution after restoring memory protection to RX. When the subsequent EXCEPTION_BREAKPOINT is catched, the exception handler replaces the previous shellcode instruction with a new breakpoint so that the allocation will never disclose the complete shellcode in an unencrypted state. This happens inside a private memory page which is initially marked as READ/WRITE.
+__ShellGhost relies on Vectored Exception Handling in combination with software breakpoints__ to cyclically stop thread execution, replacing the executed breakpoint with a RC4-encrypted shellcode instruction, decrypting the instruction and resuming execution after restoring memory protection to RX. When the subsequent EXCEPTION_BREAKPOINT is raised, the exception handler replaces the previous shellcode instruction with a new breakpoint so that the allocation will never disclose the complete shellcode in an unencrypted state. This happens inside a private memory page which is initially marked as READ/WRITE.
 Having a RW PRV allocation will not be considered an 'Indicator of Compromise' by memory scanners such as PE-Sieve and Moneta. When the allocation becomes RX and the page is scanned, nothing but breakpoints will be found. This happens while the shellcode is actually under execution. The following picture shows that a reverse shell is running, but no IOC is found by Moneta (other than the binary being unsigned).
 
 
 ![](pictures/moneta_detection.png)
+
+
+Trying to scan the process with Pe-Sieve has an even better outcome:
+
+
+![](pictures/pe-sieve.png)
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +42,7 @@ typedef struct CRYPT_BYTES_QUOTA {
 } CRYPT_BYTES_QUOTA, * PCRYPT_BYTES_QUOTA;
 ```
 
-Breakpoints are not immediately replaced with their instruction counterparts. This is because instructions are RC4-encrypted and need to undergo a decryption routine before being executed. This is where the `DWORD quota` comes into play. ShellGhost relies on the now popular 'SystemFunction032' to perform RC4 decryption. Unlike XOR, RC4 is not a single-byte encryption scheme. This means that the shellcode cannot be encrypted and decrypted all at once. This is also another reason why each instruction is treated separately. After the breakpoints are replaced, the buffer length that SystemFunction032 needs will be equal to the 'instruction quota', which again represents the number of opcodes the specific instruction is composed of. So for example, consider the following snippet.
+Breakpoints are not immediately replaced with their instruction counterparts. This is because instructions need to undergo a decryption routine before being executed. This is where the `DWORD quota` comes into play. ShellGhost relies on the now popular 'SystemFunction032' to perform RC4 decryption. Unlike XOR, RC4 is not a single-byte encryption scheme. This means that the shellcode cannot be encrypted and decrypted all at once. This is also another reason why each instruction is treated separately. After the breakpoints are replaced, the buffer length that SystemFunction032 needs will be equal to the 'instruction quota', which again represents the number of opcodes the specific instruction is composed of. So for example, consider the following snippet.
 
 
 ```c
@@ -54,7 +60,7 @@ buf.Length = 2 		// buffer length, or length of the instruction to be decrypted
 We know that shellcode instruction number 5 is composed of 2 opcodes, so a buffer length of 2 will be passed to SystemFunction032. This is important because trying to decrypt the entire shellcode with a single call to SystemFunction032 will corrupt the shellcode.
 
 ### How is Shellcode Mapping performed?
-The shellcode needs to be mapped with `ShellGhost_mapping.py` before compilation. The script extracts each single instruction and treats it as a small and independent shellcode. Instructions are encrypted with the RC4 algorithm one by one and printed out in C format all together as unsigned char. The result can be hardcoded inside the C code. Below is an example of what an encrypted MSF shellcode instructions for calc.exe looks like.
+The shellcode needs to be mapped with `ShellGhost_mapping.py` before compilation. The script extracts each single instruction and treats it as a small and independent shellcode. Instructions are encrypted one by one and printed out in C format all together as unsigned char. The result can be hardcoded inside the C code. Below is an example of what an encrypted MSF shellcode instructions for calc.exe looks like.
 
 
 ![](pictures/shellcode_mapping_1.png)
@@ -73,7 +79,7 @@ Metasploit x64 shellcodes tipically have winapi string parameters stored between
 ![](pictures/msf_jmp_rax.png)
 
 
-This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters that will never be executed like instructions. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi they are calling inside the RAX register, then make a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. Subsequently, execution is not returned to the allocated memory. Rather, RAX (winapi address) is copied into RIP and thread execution is resumed from the winapi, thus overriding the 'JMP RAX' and keeping the allocated memory RW. This is needed for reverse shells calling WaitForSingleObject, which would cause the thread to sleep after the 'JMP RAX' while leaving memory RX. The following snippet of code contains the two conditions that has to be met to in order for ShellGhost to adjust registers containing winapi parameters and allowing the MSF shellcode to correctly issue the function call.
+This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters that will never be executed like instructions. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi they are calling inside the RAX register, then make a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. Subsequently, execution is not returned to the allocated memory. Rather, RAX (winapi address) is copied into RIP and thread execution is resumed from the winapi, thus overriding the 'JMP RAX' and keeping the allocated memory RW. This is needed for reverse shells calling WaitForSingleObject, which would cause the thread to sleep after the 'JMP RAX' while leaving memory RX. The following code snippet contains the two conditions that has to be met to in order for ShellGhost to adjust the RCX register when it contains a winapi parameter string and allow the MSF shellcode to correctly issue the function call (WinExec).
 
 
 ```c
@@ -88,26 +94,24 @@ if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= (
 <snip>
 ```
 
-RDX, R8 and R9 are not covered. But they will be.
+RDX, R8 and R9 (second, third, and fourth parameters) are not covered yet, but they will be.
 
 
 ## Differences and Similarities with other Techniques
-[ShellcodeFluctuation](https://github.com/mgeeky/ShellcodeFluctuation) is a very similar in-memory evasion technique. Just like it, the allocated memory here 'flucuates' from RW to RX. In contrast, ShellGhost introduces the following improvements:
+[ShellcodeFluctuation](https://github.com/mgeeky/ShellcodeFluctuation) is a very similar in-memory evasion concept. Just like it, the allocated memory here 'fluctuates' from RW to RX. In contrast, ShellGhost introduces the following improvements:
 
-* RC4 algorithm with 'Shellcode Mapping' rather than XOR
+* RC4 encryption plus 'Shellcode Mapping' rather than single-byte XOR
 * No need to hook functions
-* Compatibility with MSF shellcodes
-
-Among the improvements, the absence of function hooking impedes PE-Sieve to track down the related IOCs.
-
-
-![](pictures/pe-sieve_detection.png)
+* Support for Metasploit shellcodes
 
 
 ShellGhost is far from being a perfect technique though. It still suffers from the biggest downside all these techniques have, namely __the need to have private executable memory at some point during execution__. More advanced techniques like [Foliage](https://github.com/y11en/FOLIAGE) already found a way around this. In addition, a memory allocation full of software breakpoints can be detected by a YARA rule. The following picture shows Moneta correctly detecting an IOC for the RX PRV allocation.
 
 
 ![](pictures/moneta_detection_2.png)
+
+
+When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. In contrast, IOC are not always precise, and some of them could turn out to be false positives when they're found.
 
 
 ## References
