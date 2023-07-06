@@ -57,7 +57,7 @@ buf.Length = 2 		// buffer length, or length of the instruction to be decrypted
 
 ```
 
-We know that shellcode instruction number 5 is composed of 2 opcodes, so a buffer length of 2 will be passed to SystemFunction032. This is important because trying to decrypt the entire shellcode with a single call to SystemFunction032 will corrupt the shellcode.
+We know that shellcode instruction number 5 is composed of 2 opcodes, so a buffer length of 2 will be passed to SystemFunction032. This is important because trying to decrypt the entire shellcode with a single call to SystemFunction032 will corrupt it entirely.
 
 ### How is Shellcode Mapping performed?
 The shellcode needs to be mapped with `ShellGhost_mapping.py` before compilation. The script extracts each single instruction and treats it as a small and independent shellcode. Instructions are encrypted one by one and printed out in C format all together as unsigned char. The result can be hardcoded inside the C code. Below is an example of what an encrypted MSF shellcode instructions for calc.exe looks like.
@@ -79,7 +79,7 @@ Metasploit x64 shellcodes tipically have winapi string parameters stored between
 ![](pictures/msf_jmp_rax.png)
 
 
-This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters that will never be executed like instructions. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi they are calling inside the RAX register, then make a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. Subsequently, execution is not returned to the allocated memory. Rather, RAX (winapi address) is copied into RIP and thread execution is resumed from the winapi, thus overriding the 'JMP RAX' and keeping the allocated memory RW. This is needed for reverse shells calling WaitForSingleObject, which would cause the thread to sleep after the 'JMP RAX' while leaving memory RX. The following code snippet contains the two conditions that has to be met to in order for ShellGhost to adjust the RCX register when it contains a winapi parameter string and allow the MSF shellcode to correctly issue the function call (WinExec).
+This means that the breakpoints whose position relates to the string will never be resolved, because the RIP will never touch that position. As a matter of fact, this code resolves actual shellcode instructions the RIP goes through, not parameters that will never be executed like instructions. To fix this, I noticed that MSF shellcodes always store a pointer to the winapi they are calling inside the RAX register, then make a jump to the register itself. So when ShellGhost VEH detects that the resolved breakpoint is 'JMP RAX' and the RCX register contains a pointer to a position inside the shellcode, it attempts to also resolve what pointed by RCX. Subsequently, execution is not returned to the allocated memory. Rather, RAX (winapi address) is copied into RIP and thread execution is resumed from the winapi, thus overriding the 'JMP RAX' and keeping the allocated memory RW. This is needed for reverse shells calling WaitForSingleObject, which would cause the thread to sleep after the 'JMP RAX' while leaving memory RX for as long as the shell remains alive. The following code snippet contains the two conditions that has to be met in order for ShellGhost to adjust the RCX register when it contains a winapi parameter string and allow the MSF shellcode to correctly issue the function call (WinExec in the example here).
 
 
 ```c
@@ -94,7 +94,7 @@ if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= (
 <snip>
 ```
 
-RDX, R8 and R9 (second, third, and fourth parameters) are not covered yet, but they will be.
+RDX, R8 and R9 (second, third, and fourth parameters) are not covered yet.
 
 
 ## Differences and Similarities with other Techniques
@@ -111,7 +111,7 @@ ShellGhost is far from being a perfect technique though. It still suffers from t
 ![](pictures/moneta_detection_2.png)
 
 
-When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. In contrast, IOC are not always precise, and some of them could turn out to be false positives when they're found.
+When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. As far as I can tell, I experienced situations when the solution does not even allow you to launch the binary the way you're doing it. The other side of the medal is that IOCs are not always precise indicators, and some of them may turn out to be false positives when they're found. With that being said, this is just a raw technique and an inspiration which I hope the reader appreciates. The Red Teamer knows that just like the components of an EDR, memory evasion is only one component of the engine.
 
 
 ## References
