@@ -2,7 +2,7 @@
 *
 * Author: Angelo Frasca Caccia (lem0nSec_)
 * Date: 06/06/2023
-* Title: Shellghost.exe
+* Title: Shellghost.c
 * Website: https://github.com/lem0nSec/ShellGhost
 *
 */
