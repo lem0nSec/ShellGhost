@@ -111,7 +111,7 @@ ShellGhost is far from being a perfect technique though. It still suffers from t
 ![](pictures/moneta_detection_2.png)
 
 
-When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. As far as I can tell, I experienced situations when the solution does not even allow you to launch the binary the way you're doing it. The other side of the medal is that IOCs are not always precise indicators, and some of them may turn out to be false positives when they're found. With that being said, this is just a raw technique and an inspiration which I hope the reader appreciates. The Red Teamer knows that just like the components of an EDR, memory evasion is only one component of the engine.
+When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. As far as I can tell, I experienced situations when the solution does not even allow you to launch the binary the way you're doing it. The other side of the medal is that IOCs are not always precise indicators, and some of them may turn out to be false positives when they're found. With that being said, this is just a raw technique and an inspiration which I hope the reader appreciates. The Red Teamer knows that just like the components of an EDR, in-memory evasion is only one component of the engine.
 
 
 ## References
