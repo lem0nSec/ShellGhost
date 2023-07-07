@@ -15,7 +15,7 @@ I came up with ShellGhost after a Metasploit shellcode inside one of my droppers
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Handling the Thread Execution Flow
-__ShellGhost relies on Vectored Exception Handling in combination with software breakpoints__ to cyclically stop thread execution, replacing the executed breakpoint with a RC4-encrypted shellcode instruction, decrypting the instruction and resuming execution after restoring memory protection to RX. When the subsequent EXCEPTION_BREAKPOINT is raised, the exception handler replaces the previous shellcode instruction with a new breakpoint so that the allocation will never disclose the complete shellcode in an unencrypted state. This happens inside a private memory page which is initially marked as READ/WRITE.
+__ShellGhost relies on Vectored Exception Handling in combination with software breakpoints__ to cyclically stop thread execution, replace the executed breakpoint with a RC4-encrypted shellcode instruction, decrypt the instruction and resume execution after restoring memory protection to RX. When the subsequent EXCEPTION_BREAKPOINT is raised, the exception handler replaces the previous shellcode instruction with a new breakpoint so that the allocation will never disclose the complete shellcode in an unencrypted state. This happens inside a private memory page which is initially marked as READ/WRITE.
 Having a RW PRV allocation will not be considered an 'Indicator of Compromise' by memory scanners such as PE-Sieve and Moneta. When the allocation becomes RX and the page is scanned, nothing but breakpoints will be found. This happens while the shellcode is actually under execution. The following picture shows that a reverse shell is running, but no IOC is found by Moneta (other than the binary being unsigned).
 
 
@@ -111,7 +111,7 @@ ShellGhost is far from being a perfect technique though. It still suffers from t
 ![](pictures/moneta_detection_2.png)
 
 
-When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. As far as I can tell, I experienced situations when the solution does not even allow you to launch the binary the way you're doing it. The other side of the medal is that IOCs are not always precise indicators, and some of them may turn out to be false positives when they're found. With that being said, this is just a raw technique and an inspiration which I hope the reader appreciates. The Red Teamer knows that just like the components of an EDR, in-memory evasion is only one component of the engine.
+When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. As far as I can tell, I experienced situations when the solution does not even allow you to launch the binary the way you're doing it. The other side of the medal is that IOCs are not always precise indicators, and some of them may turn out to be false positives. With that being said, this is just a raw technique and an inspiration which I hope the reader appreciates. The Red Teamer knows that just like the components of an EDR, in-memory evasion is only one component of the engine.
 
 
 ## References
