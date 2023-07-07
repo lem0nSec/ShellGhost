@@ -6,7 +6,7 @@
 </p>
 
 
-__A memory-based evasion technique for droppers which makes shellcode invisible from process start to end.__
+__A memory-based evasion technique which makes shellcode invisible from process start to end.__
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Motivation
