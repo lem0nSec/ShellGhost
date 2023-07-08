@@ -10,7 +10,7 @@ __A memory-based evasion technique which makes shellcode invisible from process 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Motivation
-I came up with ShellGhost after a Metasploit shellcode inside one of my droppers was flagged as malicious by an EDR solution. The EDR correctly detected the shellcode placed into the .text segment after decryption. That raised the need for having __a code that executes an 'invisible' shellcode from process start to finish__.
+I wanted to share a POC code to showcase some AV/EDR evasion concepts that may turn useful for Red Teaming. Just a few weeks ago I came up with a custom in-memory evasion technique which I named ShellGhost. This technique stems from the need for having __a code that executes an 'invisible' shellcode from process start to finish__.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
