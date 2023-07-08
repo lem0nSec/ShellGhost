@@ -10,7 +10,7 @@ __A memory-based evasion technique which makes shellcode invisible from process 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Motivation
-I wanted to share a POC code to showcase some AV/EDR evasion concepts that may turn useful for Red Teaming. Just a few weeks ago I came up with a custom in-memory evasion technique which I named ShellGhost. This technique stems from the need for having __a code that executes an 'invisible' shellcode from process start to finish__.
+I wanted to share a basic POC code to showcase some AV/EDR evasion concepts that may turn useful for Red Teaming. Just a few weeks ago I came up with a custom in-memory evasion technique which I named ShellGhost. This technique stems from the need for having __a code that executes an 'invisible' shellcode from process start to finish__.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ RDX, R8 and R9 (second, third, and fourth parameters) are not covered yet.
 * Support for Metasploit shellcodes
 
 
-ShellGhost is far from being a perfect technique though. It still suffers from the biggest downside all these techniques have, namely __the need to have private executable memory at some point during execution__. More advanced techniques like [Foliage](https://github.com/y11en/FOLIAGE) already found a way around this. In addition, a memory allocation full of software breakpoints can be detected by a YARA rule. The following picture shows Moneta correctly detecting an IOC for the RX PRV allocation.
+ShellGhost is far from being a perfect technique though. It still suffers from the biggest downside all these techniques have, namely __the need to have private executable memory at some point during execution__. More advanced techniques like Foliage already found a way around this. In addition, a memory allocation full of software breakpoints can be detected by a YARA rule. The following picture shows Moneta correctly detecting an IOC for the RX PRV allocation.
 
 
 ![](pictures/moneta_detection_2.png)
@@ -114,6 +114,5 @@ ShellGhost is far from being a perfect technique though. It still suffers from t
 When it comes to evading an EDR solution, memory scanning is just part of a bigger picture. The complete absence of IOCs does not necessarily mean that a binary using this technique will prove effective against a given EDR. As far as I can tell, I experienced situations when the solution does not even allow you to launch the binary the way you're doing it. The other side of the medal is that IOCs are not always precise indicators, and some of them may turn out to be false positives. With that being said, this is just a raw technique and an inspiration which I hope the reader appreciates. The Red Teamer knows that just like the components of an EDR, in-memory evasion is only one component of the engine.
 
 
-## References
-* https://github.com/mgeeky/ShellcodeFluctuation
-* https://github.com/y11en/FOLIAGE
+## Notes
+Compilation requires disabling incremental linking. This VS project has all compiler/linker options set. 
