@@ -115,4 +115,4 @@ When it comes to evading an EDR solution, memory scanning is just part of a bigg
 
 
 ## Notes
-Compilation requires disabling incremental linking. This VS project has all compiler/linker options set. 
+Compilation requires disabling incremental linking. This VS project has all compiler/linker options already set.
