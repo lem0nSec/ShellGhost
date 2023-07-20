@@ -14,10 +14,15 @@
 #include <ntstatus.h>
 #include <stdio.h>
 
-#define INSTRUCTION_OPCODES_QUOTA	1
-#define INSTRUCTION_OPCODES_RVA		2
-#define INSTRUCTION_OPCODES_NUMBER	3
 
+
+typedef enum {
+
+	INSTRUCTION_OPCODES_QUOTA,
+	INSTRUCTION_OPCODES_RVA,
+	INSTRUCTION_OPCODES_NUMBER
+
+} INSTR_INFO;
 
 
 typedef struct USTRING {

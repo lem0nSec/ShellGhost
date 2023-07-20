@@ -29,7 +29,7 @@ DWORD CheckAllocationProtection(LPVOID allocation, DWORD allocation_size)
 
 
 // Resolve specified instruction feature (opcodes quota, instruction rva from base, instruction number)
-DWORD ResolveBufferFeature(PVOID pointer, DWORD dwOption)
+DWORD ResolveBufferFeature(PVOID pointer, INSTR_INFO dwOption)
 {
 	DWORD offset = 0;
 	offset = (DWORD64)pointer - (DWORD64)allocation_base;
