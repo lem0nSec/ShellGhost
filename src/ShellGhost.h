@@ -10,6 +10,8 @@
 
 #pragma once
 
+#define UMDF_USING_NTSTATUS
+
 #include <windows.h>
 #include <ntstatus.h>
 #include <stdio.h>

