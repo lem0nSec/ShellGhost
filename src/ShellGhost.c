@@ -164,7 +164,7 @@ BOOL AdjustFunctionParameters(PCONTEXT contextRecord)
 {
 	BOOL status = FALSE;
 
-	if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= ((DWORD64)allocation_base + sizeof(sh))))
+	if ((contextRecord->Rcx >= (DWORD_PTR)allocation_base) && (contextRecord->Rcx <= ((DWORD_PTR)allocation_base + sizeof(sh))))
 	{
 		if (*(PBYTE)contextRecord->Rcx == 0xCC)
 		{

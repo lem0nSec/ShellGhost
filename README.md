@@ -89,7 +89,7 @@ if (*(PWORD)exceptionData->ContextRecord->Rip == 0xe0ff) // if RIP is 'JMP RAX'
 
 <snip>
 
-if ((contextRecord->Rcx >= (DWORD64)allocation_base) && (contextRecord->Rcx <= ((DWORD64)allocation_base + sizeof(sh)))) // if RCX is inside the allocation
+if ((contextRecord->Rcx >= (DWORD_PTR)allocation_base) && (contextRecord->Rcx <= ((DWORD_PTR)allocation_base + sizeof(sh)))) // if RCX is inside the allocation
 
 <snip>
 ```
