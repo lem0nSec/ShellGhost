@@ -85,7 +85,7 @@ This means that the breakpoints whose position relates to the string will never 
 ```c
 <snip>
 	
-if (*(WORD*)(WORD*)exceptionData->ContextRecord->Rip == 0xe0ff) // if RIP is 'JMP RAX'
+if (*(PWORD)exceptionData->ContextRecord->Rip == 0xe0ff) // if RIP is 'JMP RAX'
 
 <snip>
 
